@@ -29,18 +29,17 @@ chat_model = ChatHuggingFace(llm=llm)
 
 @tool
 def get_current_date() -> str:
-    """Возвращает текущую дату в формате ГГГГ-ММ-ДД.
-    Используйте этот инструмент, когда пользователь спрашивает о сегодняшней дате или текущем дне."""
+    """Возвращает текущую дату в формате ГГГГ-ММ-ДД."""
     return datetime.datetime.now().strftime("%Y-%m-%d")
 
 tools = [get_current_date]
-
 system_prompt = (
-    "Ты — полезный ассистент. "
-    "Если вопрос пользователя касается текущей даты, сегодняшнего дня или необходимости узнать дату — "
-    "обязательно используй инструмент get_current_date для получения точной информации. "
-    "Никогда не придумывай дату самостоятельно. "
-    "После вызова инструмента сообщи пользователю полученную дату четко и кратко."
+    f"Четко следуй инструкциям. "
+    f"Если пользователь спрашивает о текущей дате, сегодняшнем дне или любой информации, связанной с датой — "
+    f"всегда используй инструмент {tools[0]} для получения точной даты. "
+    f"Обязательно вызывай {tools[0]} перед ответом. "
+    f"Никогда не придумывай дату самостоятельно. "
+    f"В финальном ответе явно укажи результат, полученный от инструмента {tools[0]}."
 )
 
 agent_executor = create_react_agent(
@@ -49,14 +48,14 @@ agent_executor = create_react_agent(
     prompt=system_prompt
 )
 
-input_message = {
-    "role": "user",
-    "content": "Какая сегодня дата?"
-}
+queries = [
+    "Какая сегодня дата?",
+    "Что за число сегодня?"
+]
 
-result = agent_executor.invoke({"messages": [input_message]})
-
-print("=== Ответ агента ===")
-for message in result["messages"]:
-    message.pretty_print()
-
+for query in queries:
+    print(f"\n=== Запрос: {query} ===")
+    input_message = {"role": "user", "content": query}
+    result = agent_executor.invoke({"messages": [input_message]})
+    for message in result["messages"]:
+        message.pretty_print()
